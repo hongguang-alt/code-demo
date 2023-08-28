@@ -1,11 +1,11 @@
-const PromiseA = require("./PromiseAV");
+const PromiseA = require("./PromiseA");
 
 // 执行 promise
 const p1 = new PromiseA((reslove, reject) => {
   console.log("create promise");
   setTimeout(() => {
-    reslove("success");
-    // reject("err");
+    // reslove("success");
+    reject("err");
   }, 3000);
 })
   .then(

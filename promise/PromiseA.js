@@ -25,12 +25,16 @@ module.exports = class PromiseA {
     this.onFulfilledCallbacks = [];
     this.onRejectedCallbacks = [];
     try {
-      executor(this.reslove.call(this), this.reject.call(this));
+      executor(this.reslove.bind(this), this.reject.bind(this));
     } catch (e) {
       this.reject(e);
     }
   }
   reslove(val) {
+    // if (val instanceof PromiseA) {
+    //   return val.then(resolve, reject);
+    // }
+
     if (this.status !== PENDING) return;
     this.status = RESLOVED;
     this.successValue = val;
@@ -113,7 +117,7 @@ function resolvePromise(p, x, reslove, reject) {
             if (called) return;
             called = true;
             // 继续解析到对应的 then
-            resolvePromise(p, y, resolve, reject);
+            resolvePromise(p, y, reslove, reject);
           },
           (r) => {
             if (called) return;
@@ -121,7 +125,6 @@ function resolvePromise(p, x, reslove, reject) {
             reject(r);
           }
         );
-        console.log("执行then方法");
       } else {
         reslove(x);
       }
