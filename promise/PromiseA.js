@@ -8,9 +8,13 @@
  */
 
 /**
+ * 参考：https://github.com/qiruohan/article/blob/master/promise/promise.js
+ */
+
+/**
  * 遇到的几个问题
- * 第一个promise的错误处理怎么处理
- * 后面then里面的错误处理怎么处理
+ * 第一个promise的错误处理怎么处理，通过try catch 进行处理
+ * 后面then里面的错误处理怎么处理，使用下一个then里面的错误处理
  */
 
 const PENDING = "pending";
@@ -31,10 +35,6 @@ module.exports = class PromiseA {
     }
   }
   reslove(val) {
-    // if (val instanceof PromiseA) {
-    //   return val.then(resolve, reject);
-    // }
-
     if (this.status !== PENDING) return;
     this.status = RESLOVED;
     this.successValue = val;
@@ -98,6 +98,72 @@ module.exports = class PromiseA {
     });
     return p;
   }
+  catch(err) {
+    return this.then(null, err);
+  }
+  finally(cb) {
+    return this.then(
+      (val) => {
+        return PromiseA.resolve(cb()).then(() => val);
+      },
+      (err) => {
+        return PromiseA.resolve(cb()).then(() => {
+          throw err;
+        });
+      }
+    );
+  }
+  static resolve(data) {
+    return new PromiseA((reslove, reject) => {
+      reslove(data);
+    });
+  }
+  static reject(data) {
+    return new PromiseA((reslove, reject) => {
+      reject(data);
+    });
+  }
+  static all(promises) {
+    if (!Array.isArray(promises)) {
+      return new TypeError("arguments must be an array");
+    }
+    const length = promises.length;
+    const result = [];
+    return new PromiseA((reslove, reject) => {
+      for (let i = 0; i < length; i++) {
+        let val = promises[i];
+        if (val && typeof val.then === "function") {
+          val.then((res) => {
+            result[i] = res;
+            if (result.length === length) {
+              reslove(result);
+            }
+          }, reject);
+        } else {
+          result[i] = val;
+          if (result.length === length) {
+            reslove(result);
+          }
+        }
+      }
+    });
+  }
+
+  static race(promises) {
+    if (!Array.isArray(promises)) {
+      return new TypeError("arguments must be an array");
+    }
+    return new PromiseA((reslove, reject) => {
+      for (let i = 0; i < promises.length; i++) {
+        let val = promises[i];
+        if (val && typeof val.then === "function") {
+          promises[i].then(reslove, reject);
+        } else {
+          reslove(val);
+        }
+      }
+    });
+  }
 };
 
 function resolvePromise(p, x, reslove, reject) {
@@ -135,3 +201,12 @@ function resolvePromise(p, x, reslove, reject) {
     reslove(x);
   }
 }
+
+PromiseA.defer = PromiseA.deferred = function () {
+  let dtd = {};
+  dtd.promise = new PromiseA((resolve, reject) => {
+    dtd.resolve = resolve;
+    dtd.reject = reject;
+  });
+  return dtd;
+};
