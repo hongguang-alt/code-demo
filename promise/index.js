@@ -1,4 +1,4 @@
-const PromiseA = require("./PromiseA");
+const PromiseA = require("./promiseA");
 
 // 执行 promise
 const p1 = new PromiseA((reslove, reject) => {
