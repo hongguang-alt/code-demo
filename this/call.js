@@ -5,7 +5,7 @@ Function.prototype.selfCall = function (context, ...args) {
   // 声明当前的上下文
   context = context || window;
   const fnKey = Symbol();
-  // 修改this指向
+  // 这里的this其实就是当前调用 call 的这个函数
   context[fnKey] = this;
   // 执行函数
   const result = context[fnKey](...args);
